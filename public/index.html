@@ -2,11 +2,33 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Página de Rastreamento</title>
 </head>
 <body>
   <h1>Bem-vindo!</h1>
   <p>Essa página registra seu acesso para fins de demonstração.</p>
+
+  <h2>Suas informações:</h2>
+  <ul id="info-list">
+    <li>IP: carregando...</li>
+    <li>Localização: carregando...</li>
+    <li>Navegador: carregando...</li>
+  </ul>
+
+  <script>
+    fetch('/info')
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('info-list').innerHTML = `
+          <li><strong>IP:</strong> ${data.ip}</li>
+          <li><strong>Localização:</strong> ${data.location.city || 'Desconhecida'}, ${data.location.region || ''} - ${data.location.country_name || ''}</li>
+          <li><strong>Navegador:</strong> ${data.userAgent}</li>
+        `;
+      })
+      .catch(() => {
+        document.getElementById('info-list').innerHTML = '<li>Erro ao carregar as informações.</li>';
+      });
+  </script>
 </body>
 </html>
