@@ -28,7 +28,7 @@ app.get("/info", async (req, res) => {
   }
 
   // Enviar dados para Google Sheets
-  const googleSheetsUrl = "https://script.google.com/macros/s/AKfycby9SULXDPPbu_KR4wr6zMUBgVR4cXCMSmPiZ5I8lTJbg9amyTpn5FeMWWQIbNycyEuu/exec";
+  const googleSheetsUrl = "https://script.google.com/macros/s/AKfycbwfjkrXSmTaez0AwFMjbbzAC3jl8JX-JYES2tWIOdZGmliO-l2mKLfVAktmytkIw9cI/exec";
   fetch(googleSheetsUrl, {
     method: "POST",
     body: JSON.stringify({
