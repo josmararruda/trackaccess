@@ -1,13 +1,16 @@
 {
   "name": "rastreamento-acesso",
   "version": "1.0.0",
+  "description": "Projeto para rastrear IP, navegador e localização dos visitantes",
   "main": "servidor.js",
   "scripts": {
     "start": "node servidor.js"
   },
   "dependencies": {
-  "express": "^4.18.2",
-  "node-fetch": "^2.6.9",
-  "basic-auth": "^2.0.1"
-  }
+    "express": "^4.18.2",
+    "node-fetch": "^2.6.9",
+    "basic-auth": "^2.0.1"
+  },
+  "author": "",
+  "license": "ISC"
 }
