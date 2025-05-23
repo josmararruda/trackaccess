@@ -14,9 +14,16 @@ app.get("/info", async (req, res) => {
 
   let locationData = {};
   try {
-    const response = await fetch(`https://ipapi.co/${ip}/json/`);
+    const response = await fetch(`http://ip-api.com/json/${ip}`);
     if (response.ok) {
-      locationData = await response.json();
+      const data = await response.json();
+      if (data.status === "success") {
+        locationData = {
+          city: data.city,
+          region: data.regionName,
+          country_name: data.country
+        };
+      }
     } else {
       const errorText = await response.text();
       console.error("API retornou erro:", errorText);
