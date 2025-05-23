@@ -1,3 +1,4 @@
+const fs = require("fs");
 const express = require("express");
 const fetch = require("node-fetch");
 const path = require("path");
@@ -14,6 +15,11 @@ app.get("/", async (req, res) => {
   try {
     const response = await fetch(`https://ipapi.co/${ip}/json/`);
     locationData = await response.json();
+    const logLine = `[${new Date().toISOString()}] IP: ${ip}, Navegador: ${userAgent}, País: ${locationData.country_name || "desconhecido"}\n`;
+    fs.appendFile("acessos.log", logLine, (err) => {
+      if (err) console.error("Erro ao registrar acesso:", err);
+    });
+
   } catch (err) {
     console.error("Erro ao obter localização:", err);
   }
