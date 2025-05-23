@@ -10,8 +10,8 @@ app.use(express.static("public"));
 
 const auth = (req, res, next) => {
   const user = basicAuth(req);
-  const username = "admin";    // altere aqui se quiser
-  const password = "senha123"; // altere aqui se quiser
+  const username = "admin";
+  const password = "senha123";
 
   if (!user || user.name !== username || user.pass !== password) {
     res.set("WWW-Authenticate", 'Basic realm="Área restrita"');
@@ -20,7 +20,11 @@ const auth = (req, res, next) => {
   next();
 };
 
-app.get("/", async (req, res) => {
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "/public/index.html"));
+});
+
+app.get("/info", async (req, res) => {
   const ip = req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.remoteAddress;
   const userAgent = req.headers["user-agent"];
 
@@ -32,18 +36,16 @@ app.get("/", async (req, res) => {
     console.error("Erro ao obter localização:", err);
   }
 
-  // Log para arquivo
   const logLine = `[${new Date().toISOString()}] IP: ${ip}, Navegador: ${userAgent}, País: ${locationData.country_name || "desconhecido"}\n`;
   fs.appendFile("acessos.log", logLine, (err) => {
     if (err) console.error("Erro ao registrar acesso:", err);
   });
 
-  console.log("Novo acesso:");
-  console.log("IP:", ip);
-  console.log("Navegador:", userAgent);
-  console.log("Localização:", locationData);
-
-  res.sendFile(path.join(__dirname, "/public/index.html"));
+  res.json({
+    ip,
+    userAgent,
+    location: locationData
+  });
 });
 
 app.get("/logs", auth, (req, res) => {
