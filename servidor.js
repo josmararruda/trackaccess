@@ -1,8 +1,6 @@
-// servidor.js
 const express = require("express");
 const fetch = require("node-fetch");
 const path = require("path");
-const fs = require("fs");
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -24,19 +22,24 @@ app.get("/info", async (req, res) => {
           country_name: data.country
         };
       }
-    } else {
-      const errorText = await response.text();
-      console.error("API retornou erro:", errorText);
     }
   } catch (err) {
     console.error("Erro ao obter localização:", err);
   }
 
-  // Registrar dados em um log
-  const logLine = `[${new Date().toISOString()}] IP: ${ip}, Navegador: ${userAgent}, Cidade: ${locationData.city || 'Desconhecida'}, Região: ${locationData.region || 'Desconhecida'}, País: ${locationData.country_name || 'Desconhecido'}\n`;
-  fs.appendFile("acessos.log", logLine, (err) => {
-    if (err) console.error("Erro ao registrar no log:", err);
-  });
+  // Enviar dados para Google Sheets
+  const googleSheetsUrl = "https://script.google.com/macros/s/AKfycby9SULXDPPbu_KR4wr6zMUBgVR4cXCMSmPiZ5I8lTJbg9amyTpn5FeMWWQIbNycyEuu/exec";
+  fetch(googleSheetsUrl, {
+    method: "POST",
+    body: JSON.stringify({
+      ip,
+      userAgent,
+      city: locationData.city,
+      region: locationData.regionName,
+      country: locationData.country_name
+    }),
+    headers: { "Content-Type": "application/json" }
+  }).catch(err => console.error("Erro ao enviar para Google Sheets:", err));
 
   res.json({
     ip,
@@ -52,41 +55,3 @@ app.get("/", (req, res) => {
 app.listen(port, () => {
   console.log(`Servidor rodando em http://localhost:${port}`);
 });
-
-// public/index.html
-/*
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Página de Rastreamento</title>
-</head>
-<body>
-  <h1>Bem-vindo!</h1>
-  <p>Essa página registra seu acesso para fins de demonstração.</p>
-
-  <h2>Suas informações:</h2>
-  <ul id="info-list">
-    <li>IP: carregando...</li>
-    <li>Localização: carregando...</li>
-    <li>Navegador: carregando...</li>
-  </ul>
-
-  <script>
-    fetch('/info')
-      .then(res => res.json())
-      .then(data => {
-        document.getElementById('info-list').innerHTML = `
-          <li><strong>IP:</strong> ${data.ip}</li>
-          <li><strong>Localização:</strong> ${data.location.city || 'Desconhecida'}, ${data.location.region || ''} - ${data.location.country_name || ''}</li>
-          <li><strong>Navegador:</strong> ${data.userAgent}</li>
-        `;
-      })
-      .catch(() => {
-        document.getElementById('info-list').innerHTML = '<li>Erro ao carregar as informações.</li>';
-      });
-  </script>
-</body>
-</html>
-*/
