@@ -1,28 +1,12 @@
+// servidor.js
 const express = require("express");
 const fetch = require("node-fetch");
 const path = require("path");
 const fs = require("fs");
-const basicAuth = require("basic-auth");
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(express.static("public"));
-
-const auth = (req, res, next) => {
-  const user = basicAuth(req);
-  const username = "admin";
-  const password = "senha123";
-
-  if (!user || user.name !== username || user.pass !== password) {
-    res.set("WWW-Authenticate", 'Basic realm="Área restrita"');
-    return res.status(401).send("Autenticação requerida.");
-  }
-  next();
-};
-
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "/public/index.html"));
-});
 
 app.get("/info", async (req, res) => {
   const ip = req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.remoteAddress;
@@ -31,14 +15,20 @@ app.get("/info", async (req, res) => {
   let locationData = {};
   try {
     const response = await fetch(`https://ipapi.co/${ip}/json/`);
-    locationData = await response.json();
+    if (response.ok) {
+      locationData = await response.json();
+    } else {
+      const errorText = await response.text();
+      console.error("API retornou erro:", errorText);
+    }
   } catch (err) {
     console.error("Erro ao obter localização:", err);
   }
 
-  const logLine = `[${new Date().toISOString()}] IP: ${ip}, Navegador: ${userAgent}, País: ${locationData.country_name || "desconhecido"}\n`;
+  // Registrar dados em um log
+  const logLine = `[${new Date().toISOString()}] IP: ${ip}, Navegador: ${userAgent}, Cidade: ${locationData.city || 'Desconhecida'}, Região: ${locationData.region || 'Desconhecida'}, País: ${locationData.country_name || 'Desconhecido'}\n`;
   fs.appendFile("acessos.log", logLine, (err) => {
-    if (err) console.error("Erro ao registrar acesso:", err);
+    if (err) console.error("Erro ao registrar no log:", err);
   });
 
   res.json({
@@ -48,15 +38,48 @@ app.get("/info", async (req, res) => {
   });
 });
 
-app.get("/logs", auth, (req, res) => {
-  const logPath = "acessos.log";
-  if (fs.existsSync(logPath)) {
-    res.sendFile(path.resolve(logPath));
-  } else {
-    res.status(404).send("Arquivo de logs não encontrado.");
-  }
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "/public/index.html"));
 });
 
 app.listen(port, () => {
   console.log(`Servidor rodando em http://localhost:${port}`);
 });
+
+// public/index.html
+/*
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Página de Rastreamento</title>
+</head>
+<body>
+  <h1>Bem-vindo!</h1>
+  <p>Essa página registra seu acesso para fins de demonstração.</p>
+
+  <h2>Suas informações:</h2>
+  <ul id="info-list">
+    <li>IP: carregando...</li>
+    <li>Localização: carregando...</li>
+    <li>Navegador: carregando...</li>
+  </ul>
+
+  <script>
+    fetch('/info')
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('info-list').innerHTML = `
+          <li><strong>IP:</strong> ${data.ip}</li>
+          <li><strong>Localização:</strong> ${data.location.city || 'Desconhecida'}, ${data.location.region || ''} - ${data.location.country_name || ''}</li>
+          <li><strong>Navegador:</strong> ${data.userAgent}</li>
+        `;
+      })
+      .catch(() => {
+        document.getElementById('info-list').innerHTML = '<li>Erro ao carregar as informações.</li>';
+      });
+  </script>
+</body>
+</html>
+*/
